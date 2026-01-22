@@ -1,4 +1,4 @@
-#API_KEY: AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g
+#API_KEY: AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU
 #MAGIC_HOUR_KEY: mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx
 
 import streamlit as st
@@ -10,7 +10,7 @@ from google.genai import types
 
 # --- 1. CONFIGURATION ---
 # It is safer to use st.secrets on Streamlit Cloud, but you can paste keys here for local testing.
-GEMINI_KEY = st.secrets.get("GEMINI_API_KEY", "AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g")
+GEMINI_KEY = st.secrets.get("GEMINI_API_KEY", "AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU")
 MAGIC_HOUR_KEY = st.secrets.get("MAGIC_HOUR_API_KEY", "mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx")
 
 client_gemini = genai.Client(api_key=GEMINI_KEY)
