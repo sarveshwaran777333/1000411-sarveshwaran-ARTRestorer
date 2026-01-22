@@ -1,48 +1,48 @@
-#AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g
+#API_KEY: AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g
+#MAGIC_HOUR_KEY: mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx
 
 import streamlit as st
-import cv2
-import numpy as np
-from gfpgan import GFPGANer
+import os
+from magic_hour import Client
 from google import genai
 from google.genai import types
-from PIL import Image
-import io
 
-# --- 1. SETUP & CONFIG ---
-# Replace with your actual API key
-client = genai.Client(api_key="AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g")
+# --- CONFIGURATION ---
+# Get your API keys from: 
+# 1. https://aistudio.google.com/
+# 2. https://magichour.ai/developer-hub
+GEMINI_KEY = "AIzaSyCUHXHze9sRxunWYfLhcUo1xaU5JaIZL4g"
+MAGIC_HOUR_KEY = "mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx"
 
-st.set_page_config(page_title="ArtRestorer Pro", layout="wide")
+client_gemini = genai.Client(api_key=GEMINI_KEY)
+client_magic = Client(token=MAGIC_HOUR_KEY)
 
-# --- 2. LOAD LOCAL ENGINE (Cached) ---
-@st.cache_resource
-def load_restorer():
-    # Ensure GFPGANv1.3.pth is in your project folder
-    model_path = 'GFPGANv1.3.pth' 
-    return GFPGANer(model_path=model_path, upscale=2, arch='clean', channel_multiplier=2)
+st.set_page_config(page_title="AI Art Studio", layout="wide")
 
-restorer = load_restorer()
+# --- HELPERS ---
+def run_magic_restoration(temp_file_path):
+    """Uses Magic Hour AI to Upscale & Restore"""
+    # The 'generate' helper automatically uploads, waits, and downloads the result
+    response = client_magic.v1.ai_image_upscaler.generate(
+        assets={
+            "image_file_path": temp_file_path 
+        },
+        scale=2, # Doubles the resolution
+        wait_for_completion=True,
+        download_outputs=True,
+        download_directory="./restored_outputs/"
+    )
+    # Returns the path to the downloaded image
+    return response.downloaded_file_paths[0]
 
-# --- 3. HELPER FUNCTIONS ---
-def analyze_and_speak(image_bytes):
-    """Gemini 2.5 Flash for Text Analysis + Speech"""
-    analysis_prompt = "You are an Expert Art Conservator. Briefly analyze this photo and tell me 3 steps to restore it."
-    
-    # Text Analysis
-    text_response = client.models.generate_content(
-        model="gemini-2.5-flash",
+def gemini_speak(image_bytes):
+    """Gemini 2.5 Flash analysis and TTS"""
+    response = client_gemini.models.generate_content(
+        model="gemini-2.5-flash-tts",
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-            analysis_prompt
-        ]
-    )
-    analysis_text = text_response.text
-    
-    # Audio Generation (Native 2026 TTS)
-    speech_response = client.models.generate_content(
-        model="gemini-2.5-flash-tts",
-        contents=f"In a professional curator voice: {analysis_text}",
+            "Briefly analyze this photo's damage as a curator and suggest restoration."
+        ],
         config=types.GenerateContentConfig(
             response_modalities=["AUDIO"],
             speech_config=types.SpeechConfig(
@@ -52,42 +52,29 @@ def analyze_and_speak(image_bytes):
             )
         )
     )
+    return response.candidates[0].content.parts[0].inline_data.data
 
-    audio_bytes = speech_response.candidates[0].content.parts[0].inline_data.data
-    return analysis_text, audio_bytes
-
-# --- 4. STREAMLIT UI ---
-st.title("🎨 Professional Art Restoration Studio")
-st.markdown("---")
-
-uploaded_file = st.file_uploader("Upload a degraded photograph", type=["jpg", "png", "jpeg"])
+# --- APP UI ---
+st.title("🎨 Hybrid AI Restoration Studio")
+uploaded_file = st.file_uploader("Upload an old photo", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    # Prepare Image Data
-    image_bytes = uploaded_file.getvalue()
-    input_img_cv = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), 1)
-    
+    # Save temp file for Magic Hour to read
+    temp_path = f"temp_{uploaded_file.name}"
+    with open(temp_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("1. Original Artifact")
-        st.image(uploaded_file, use_container_width=True)
-        
-        if st.button("🎙️ Analyze & Listen"):
-            with st.spinner("Gemini is inspecting the artifact..."):
-                text, audio = analyze_and_speak(image_bytes)
-                st.info(text)
-                st.audio(audio, format="audio/wav")
+        st.image(uploaded_file, caption="Original Photo", use_container_width=True)
+        if st.button("🎙️ Gemini: Analyze & Speak"):
+            audio = gemini_speak(uploaded_file.getvalue())
+            st.audio(audio, format="audio/wav")
 
     with col2:
-        st.subheader("2. Digital Reconstruction")
-        if st.button("✨ Run GFPGAN Restoration"):
-            with st.spinner("Reconstructing facial features locally..."):
-                # Local Pixel Enhancement
-                _, _, restored_img = restorer.enhance(
-                    input_img_cv, has_aligned=False, only_center_face=False, paste_back=True
-                )
-                restored_rgb = cv2.cvtColor(restored_img, cv2.COLOR_BGR2RGB)
-                
-                st.image(restored_rgb, caption="Enhanced by Local Engine", use_container_width=True)
-                st.success("Restoration successful!")
+        if st.button("🚀 Magic Hour: Restore & Upscale"):
+            with st.spinner("Magic Hour is rebuilding pixels..."):
+                restored_path = run_magic_restoration(temp_path)
+                st.image(restored_path, caption="Restored by Magic Hour", use_container_width=True)
+                st.success("Restoration Complete!")
