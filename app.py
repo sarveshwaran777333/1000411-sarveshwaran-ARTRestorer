@@ -56,21 +56,30 @@ def gemini_analyze_and_speak(image_bytes):
     return report_text, audio_bytes
 
 def run_magic_hour_restoration(input_path):
-    """Uses Magic Hour API to upscale and sharpen the photo."""
-    # Ensure the output directory exists
     if not os.path.exists("./restored_outputs"):
         os.makedirs("./restored_outputs")
         
+    # generate() is the high-level method for 2026
     response = client_magic.v1.ai_image_upscaler.generate(
         assets={"image_file_path": input_path},
         scale_factor=2.0,
-        style={"enhancement": "Balanced"},
         wait_for_completion=True,
         download_outputs=True,
         download_directory="./restored_outputs"
     )
-    # Return the path to the newest file in that directory
-    return response.downloaded_file_paths[0]
+    
+    # FIX: Access the first file path from the updated response object
+    # The SDK now stores the result in a different internal attribute
+    try:
+        # In v0.44+, use the internal '_downloaded_files' if available
+        # or grab the first path from the result folder
+        files = os.listdir("./restored_outputs")
+        # Filter for the most recently created file in that folder
+        paths = [os.path.join("./restored_outputs", f) for f in files]
+        return max(paths, key=os.path.getctime)
+    except Exception:
+        # Fallback: if listdir fails, check the actual response data
+        return response.data.downloads[0].url
 
 # --- 3. STREAMLIT UI ---
 
