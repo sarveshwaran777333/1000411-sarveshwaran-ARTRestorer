@@ -1,0 +1,5 @@
+streamlit
+google-genai
+magic_hour
+Pillow
+numpy
