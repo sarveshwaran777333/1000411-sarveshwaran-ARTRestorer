@@ -14,8 +14,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-GEMINI_KEY = st.secrets["GEMINI_API_KEY"]
-MAGIC_HOUR_KEY = st.secrets["MAGIC_HOUR_API_KEY"]
+GEMINI_KEY = st.secrets.get("GEMINI_API_KEY")
+MAGIC_HOUR_KEY = st.secrets.get("MAGIC_HOUR_API_KEY")
+
+if GEMINI_KEY is None or MAGIC_HOUR_KEY is None:
+    st.error("Missing API keys. Add GEMINI_API_KEY and MAGIC_HOUR_API_KEY in Streamlit Secrets.")
+    st.stop()
+
 
 client_gemini = genai.Client(api_key=GEMINI_KEY)
 client_magic = Client(token=MAGIC_HOUR_KEY)
