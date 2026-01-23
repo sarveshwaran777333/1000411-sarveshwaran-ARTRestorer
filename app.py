@@ -55,38 +55,20 @@ def gemini_analyze_and_speak(image_bytes):
     audio_bytes = speech_response.candidates[0].content.parts[0].inline_data.data
     return report_text, audio_bytes
 
-def run_magic_hour_restoration(input_path, enhancement_type="Balanced"):
-    if not os.path.exists("./restored_outputs"):
-        os.makedirs("./restored_outputs")
-        
-    # 1. Generate with the REQUIRED 'style' argument
+def run_magic_hour_restoration(input_path):
     response = client_magic.v1.ai_image_upscaler.generate(
         assets={"image_file_path": input_path},
-        scale_factor=2.0,
-        style={"enhancement": enhancement_type}, # Fixed: Now mandatory
+        scale_factor=2.0, # You can try 4.0 if you have a paid plan for 4K clarity
+        style={"enhancement": "Creative"}, # <--- CHANGE THIS FROM "Balanced" TO "Creative"
         wait_for_completion=True,
         download_outputs=True,
         download_directory="./restored_outputs"
     )
     
-    # 2. Fixed: Correct way to access the file path in 2026 SDK
-    # The SDK now returns a response where 'downloaded_file_paths' 
-    # is inside the high-level response object or must be fetched via os
-    try:
-        # Check if the attribute exists in your specific SDK version
-        if hasattr(response, 'downloaded_file_paths') and response.downloaded_file_paths:
-            return response.downloaded_file_paths[0]
-        
-        # Fallback: Get the most recent file from the directory
-        import glob
-        list_of_files = glob.glob('./restored_outputs/*')
-        if not list_of_files:
-            # Final Fallback: Return the cloud URL if download failed
-            return response.data.downloads[0].url
-        return max(list_of_files, key=os.path.getctime)
-        
-    except Exception:
-        return response.data.downloads[0].url
+    # Using the safest method to find the downloaded file
+    import glob
+    list_of_files = glob.glob('./restored_outputs/*')
+    return max(list_of_files, key=os.path.getctime)
 # --- 3. STREAMLIT UI ---
 
 st.title("🎨 ArtRestorer: Expert Analysis & AI Reconstruction")
