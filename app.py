@@ -55,31 +55,28 @@ def gemini_analyze_and_speak(image_bytes):
     audio_bytes = speech_response.candidates[0].content.parts[0].inline_data.data
     return report_text, audio_bytes
 
-def run_magic_hour_restoration(input_path):
+def run_magic_hour_restoration(input_path, enhancement_type="Balanced"):
+    """
+    enhancement_type can be:
+    - 'Balanced': Good for most old photos.
+    - 'Resemblance': Keeps it exactly like the original (just sharper).
+    - 'Creative': Rebuilds missing details (best for very blurry photos).
+    """
     if not os.path.exists("./restored_outputs"):
         os.makedirs("./restored_outputs")
         
-    # generate() is the high-level method for 2026
+    # The 'style' argument is now a REQUIRED keyword-only argument in 2026
     response = client_magic.v1.ai_image_upscaler.generate(
         assets={"image_file_path": input_path},
         scale_factor=2.0,
+        style={"enhancement": enhancement_type}, # This fixes your error!
         wait_for_completion=True,
         download_outputs=True,
         download_directory="./restored_outputs"
     )
     
-    # FIX: Access the first file path from the updated response object
-    # The SDK now stores the result in a different internal attribute
-    try:
-        # In v0.44+, use the internal '_downloaded_files' if available
-        # or grab the first path from the result folder
-        files = os.listdir("./restored_outputs")
-        # Filter for the most recently created file in that folder
-        paths = [os.path.join("./restored_outputs", f) for f in files]
-        return max(paths, key=os.path.getctime)
-    except Exception:
-        # Fallback: if listdir fails, check the actual response data
-        return response.data.downloads[0].url
+    # Return the file path from the updated 2026 response object
+    return response.downloaded_file_paths[0]
 
 # --- 3. STREAMLIT UI ---
 
