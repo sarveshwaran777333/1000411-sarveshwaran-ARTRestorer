@@ -56,16 +56,23 @@ def gemini_analyze_and_speak(image_bytes):
     return report_text, audio_bytes
 
 def run_magic_hour_restoration(input_path):
+    # Mandatory folder setup
+    if not os.path.exists("./restored_outputs"):
+        os.makedirs("./restored_outputs")
+        
     response = client_magic.v1.ai_image_upscaler.generate(
         assets={"image_file_path": input_path},
-        scale_factor=2.0, # You can try 4.0 if you have a paid plan for 4K clarity
-        style={"enhancement": "Creative"}, # <--- CHANGE THIS FROM "Balanced" TO "Creative"
+        scale_factor=2.0, # Use 4.0 if you have a Creator plan for 4K results
+        style={
+            "enhancement": "Creative", # Reconstructs sharp details from scratch
+        },
+        # Optional: Some 2026 SDK versions allow a prompt to guide the AI
+        # name="Hyper-realistic portrait restoration, sharp focus, 8k details",
         wait_for_completion=True,
         download_outputs=True,
         download_directory="./restored_outputs"
     )
     
-    # Using the safest method to find the downloaded file
     import glob
     list_of_files = glob.glob('./restored_outputs/*')
     return max(list_of_files, key=os.path.getctime)
