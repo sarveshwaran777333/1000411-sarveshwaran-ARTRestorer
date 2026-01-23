@@ -74,7 +74,7 @@ def run_magic_hour_restoration(input_path: str) -> str:
 
     client_magic.v1.ai_image_upscaler.generate(
         assets={"image_file_path": input_path},
-        scale_factor=4.0,
+        scale_factor=2.0,
         style={"enhancement": "Creative"},
         wait_for_completion=True,
         download_outputs=True,
