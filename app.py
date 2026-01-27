@@ -8,7 +8,7 @@ import PIL.Image
 import io
 
 # Setup - Use your Gemini API Key
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+GEMINI_API_KEY = "AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 def invisible_ai_restore(image_bytes):
