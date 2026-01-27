@@ -4,85 +4,64 @@
 import streamlit as st
 from google import genai
 from google.genai import types
-from PIL import Image
+import PIL.Image
 import io
 
-# 1. Setup - The user never sees this part
-GEMINI_API_KEY = "AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU"  # Replace with your actual key
+# Setup - Use your Gemini API Key
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-def restore_with_gemini(image_bytes):
+def invisible_ai_restore(image_bytes):
     """
-    Sends the image to Gemini 'behind the scenes' and gets a 
-    restored version back as the response.
+    Step 1: Gemini analyzes the blur.
+    Step 2: Imagen 4 generates the restored version.
     """
-    prompt = (
-        "ACT AS A PROFESSIONAL PHOTO RESTORER. Reconstruct this image. "
-        "1. Remove all digital noise, blur, and artifacts. "
-        "2. Sharpen facial features, eyes, and textures. "
-        "3. Ensure the lighting is natural. "
-        "Output ONLY the final restored image."
-    )
-
     try:
-        # We use the multimodal 'gemini-3-flash' model for reasoning + generation
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", 
+        # First, Gemini 'looks' at the photo to understand what to fix
+        analysis = client.models.generate_content(
+            model="gemini-2.0-flash",
             contents=[
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                prompt
-            ],
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE"]
+                "Describe this photo in extreme detail so an artist could recreate it "
+                "perfectly but in 4K high definition, removing all blur and noise."
+            ]
+        )
+        detailed_prompt = analysis.text
+
+        # Second, we send that 'perfect description' to the Image Engine
+        # This model is specifically built to output IMAGE pixels.
+        response = client.models.generate_image(
+            model="imagen-3.0-generate-002", # Or 'imagen-4.0-generate-001' if available
+            prompt=f"A professional 4K photo restoration: {detailed_prompt}",
+            config=types.GenerateImageConfig(
+                number_of_images=1,
+                aspect_ratio="1:1",
+                output_mime_type="image/jpeg"
             )
         )
         
-        # Extract the image data from Gemini's response
-        for part in response.candidates[0].content.parts:
-            if part.inline_data:
-                return part.inline_data.data
-        return None
+        # Get the actual image data
+        return response.generated_images[0].image.image_bytes
+
     except Exception as e:
-        st.error(f"Gemini Restoration Error: {e}")
+        st.error(f"Restoration Error: {e}")
         return None
 
-# 2. The Web Interface (Streamlit)
-st.set_page_config(page_title="Gemini Photo Restorer", layout="wide")
-st.title("✨ AI Photo Restoration")
-st.write("The intelligence of Gemini, hidden behind your own app.")
+# --- Streamlit Interface ---
+st.title("✨ Hidden Engine Restorer")
 
-col1, col2 = st.columns(2)
+uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png"])
 
-with col1:
-    st.header("Upload")
-    uploaded_file = st.file_uploader("Choose a blurry photo...", type=["jpg", "jpeg", "png"])
-    
-    if uploaded_file:
-        st.image(uploaded_file, caption="Original Image", use_container_width=True)
-        
-        # This is the button that triggers your "Hidden AI" idea
-        if st.button("🚀 Restore with Gemini"):
-            with st.spinner("Gemini is rebuilding your photo..."):
-                # Convert the uploaded file to bytes for the API
-                img_bytes = uploaded_file.getvalue()
-                
-                # Run the restoration logic
-                restored_data = restore_with_gemini(img_bytes)
-                
-                if restored_data:
-                    st.session_state['restored_image'] = restored_data
-                else:
-                    st.error("Restoration failed. Please try again.")
+if uploaded_file:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image(uploaded_file, caption="Original")
+        if st.button("Restore Now"):
+            with st.spinner("AI Brains are working..."):
+                result = invisible_ai_restore(uploaded_file.getvalue())
+                if result:
+                    st.session_state['result'] = result
 
-with col2:
-    st.header("Restored Result")
-    if 'restored_image' in st.session_state:
-        st.image(st.session_state['restored_image'], caption="Fixed by Gemini", use_container_width=True)
-        st.download_button(
-            label="Download Restored Image",
-            data=st.session_state['restored_image'],
-            file_name="gemini_fixed.png",
-            mime="image/png"
-        )
-    else:
-        st.info("Your restored photo will appear here.")
+    with col2:
+        if 'result' in st.session_state:
+            st.image(st.session_state['result'], caption="Restored")
