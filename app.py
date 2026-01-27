@@ -1,4 +1,4 @@
-#API_KEY: AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU
+#API_KEY: AIzaSyBCnFGK0OPIHSZNpenNF0EXuJ6eguU5M6o
 #MAGIC_HOUR_KEY: mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx
 
 import streamlit as st
@@ -8,7 +8,7 @@ import PIL.Image
 import io
 
 # Setup - Use your Gemini API Key
-GEMINI_API_KEY = "AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU"
+GEMINI_API_KEY = "AIzaSyBCnFGK0OPIHSZNpenNF0EXuJ6eguU5M6o"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 def invisible_ai_restore(image_bytes):
