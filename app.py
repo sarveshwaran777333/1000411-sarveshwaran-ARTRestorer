@@ -2,147 +2,87 @@
 #MAGIC_HOUR_KEY: mhk_live_oBBlvwx7K3YTxh8RcDXoUq6law1dk0IF43sqCVharoYJmgxNa9vCiqVQ9ev8qYHCQqarbuNgTIUkYvGx
 
 import streamlit as st
-import os
-import tempfile
-import glob
-from magic_hour import Client
 from google import genai
 from google.genai import types
-st.set_page_config(
-    page_title="ArtRestorer AI Pro",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+from PIL import Image
+import io
 
-GEMINI_KEY = st.secrets.get("GEMINI_API_KEY")
-MAGIC_HOUR_KEY = st.secrets.get("MAGIC_HOUR_API_KEY")
+# 1. Setup - The user never sees this part
+GEMINI_API_KEY = "AIzaSyCnmHfN3pQyjuZv1D5Dumr7Nff9lvNuNsU"  # Replace with your actual key
+client = genai.Client(api_key=GEMINI_API_KEY)
 
-if GEMINI_KEY is None or MAGIC_HOUR_KEY is None:
-    st.error("Missing API keys. Add GEMINI_API_KEY and MAGIC_HOUR_API_KEY in Streamlit Secrets.")
-    st.stop()
-
-
-client_gemini = genai.Client(api_key=GEMINI_KEY)
-client_magic = Client(token=MAGIC_HOUR_KEY)
-
-OUTPUT_DIR = "restored_outputs"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-@st.cache_data(show_spinner=False)
-def gemini_analyze_and_speak(image_bytes: bytes):
-    """Analyze artwork damage and generate curator-style speech"""
-
-    analysis_prompt = (
-        "You are a professional art conservator. "
-        "Analyze the damage in this photograph and provide exactly "
-        "3 concise restoration steps."
+def restore_with_gemini(image_bytes):
+    """
+    Sends the image to Gemini 'behind the scenes' and gets a 
+    restored version back as the response.
+    """
+    prompt = (
+        "ACT AS A PROFESSIONAL PHOTO RESTORER. Reconstruct this image. "
+        "1. Remove all digital noise, blur, and artifacts. "
+        "2. Sharpen facial features, eyes, and textures. "
+        "3. Ensure the lighting is natural. "
+        "Output ONLY the final restored image."
     )
 
-    # Image Analysis
-    analysis = client_gemini.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[
-            types.Part.from_bytes(
-                data=image_bytes,
-                mime_type="image/jpeg"
-            ),
-            analysis_prompt
-        ]
-    )
-
-    report_text = analysis.text.strip()
-    speech = client_gemini.models.generate_content(
-        model="gemini-2.5-flash-tts",
-        contents=f"Speak calmly like a museum curator: {report_text}",
-        config=types.GenerateContentConfig(
-            response_modalities=["AUDIO"],
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name="Kore"
-                    )
-                )
+    try:
+        # We use the multimodal 'gemini-3-flash' model for reasoning + generation
+        response = client.models.generate_content(
+            model="gemini-3-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_modalities=["IMAGE"] # Crucial: tells Gemini to return an image
             )
         )
-    )
+        
+        # Extract the image data from Gemini's response
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                return part.inline_data.data
+        return None
+    except Exception as e:
+        st.error(f"Gemini Restoration Error: {e}")
+        return None
 
-    audio_bytes = speech.candidates[0].content.parts[0].inline_data.data
-    return report_text, audio_bytes
+# 2. The Web Interface (Streamlit)
+st.set_page_config(page_title="Gemini Photo Restorer", layout="wide")
+st.title("✨ AI Photo Restoration")
+st.write("The intelligence of Gemini, hidden behind your own app.")
 
+col1, col2 = st.columns(2)
 
-def run_magic_hour_restoration(input_path: str) -> str:
-    """Run Magic Hour AI upscaling and restoration"""
+with col1:
+    st.header("Upload")
+    uploaded_file = st.file_uploader("Choose a blurry photo...", type=["jpg", "jpeg", "png"])
+    
+    if uploaded_file:
+        st.image(uploaded_file, caption="Original Image", use_container_width=True)
+        
+        # This is the button that triggers your "Hidden AI" idea
+        if st.button("🚀 Restore with Gemini"):
+            with st.spinner("Gemini is rebuilding your photo..."):
+                # Convert the uploaded file to bytes for the API
+                img_bytes = uploaded_file.getvalue()
+                
+                # Run the restoration logic
+                restored_data = restore_with_gemini(img_bytes)
+                
+                if restored_data:
+                    st.session_state['restored_image'] = restored_data
+                else:
+                    st.error("Restoration failed. Please try again.")
 
-    client_magic.v1.ai_image_upscaler.generate(
-        assets={"image_file_path": input_path},
-        scale_factor=2.0,
-        style={"enhancement": "Creative"},
-        wait_for_completion=True,
-        download_outputs=True,
-        download_directory=OUTPUT_DIR
-    )
-
-    restored_files = glob.glob(f"{OUTPUT_DIR}/*")
-    return max(restored_files, key=os.path.getctime)
-st.title("🎨 ArtRestorer AI Pro")
-st.caption("AI-powered artwork damage analysis, voice explanation, and restoration")
-
-uploaded_file = st.file_uploader(
-    "Upload an old photograph",
-    type=["jpg", "jpeg", "png"]
-)
-
-if uploaded_file:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
-        temp_file.write(uploaded_file.getbuffer())
-        temp_path = temp_file.name
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("1. Original Artifact")
-        st.image(uploaded_file, use_container_width=True)
-
-        analyze_btn = st.button("🎙️ Analyze & Listen")
-
-        if analyze_btn:
-            with st.spinner("Analyzing damage with Gemini AI..."):
-                try:
-                    report, audio = gemini_analyze_and_speak(
-                        uploaded_file.getvalue()
-                    )
-                    st.success("Analysis Complete")
-                    st.info(report)
-                    st.audio(audio, format="audio/wav")
-                except Exception as e:
-                    st.error("Gemini analysis failed.")
-                    st.exception(e) 
-    with col2:
-        st.subheader("2. AI Reconstruction")
-
-        restore_btn = st.button("🚀 Run Magic Hour Restoration")
-
-        if restore_btn:
-            with st.spinner("Restoring artwork using Magic Hour AI..."):
-                try:
-                    restored_path = run_magic_hour_restoration(temp_path)
-                    st.image(
-                        restored_path,
-                        caption="Restored Version",
-                        use_container_width=True
-                    )
-
-                    with open(restored_path, "rb") as img:
-                        st.download_button(
-                            "📥 Download Restored Image",
-                            data=img,
-                            file_name=f"restored_{uploaded_file.name}",
-                            mime="image/jpeg"
-                        )
-
-                    st.success("Restoration completed successfully.")
-
-                except Exception as e:
-                    st.error("Restoration failed.")
-                    st.exception(e)
-
-    # Cleanup temp file
-    os.remove(temp_path)
+with col2:
+    st.header("Restored Result")
+    if 'restored_image' in st.session_state:
+        st.image(st.session_state['restored_image'], caption="Fixed by Gemini", use_container_width=True)
+        st.download_button(
+            label="Download Restored Image",
+            data=st.session_state['restored_image'],
+            file_name="gemini_fixed.png",
+            mime="image/png"
+        )
+    else:
+        st.info("Your restored photo will appear here.")
