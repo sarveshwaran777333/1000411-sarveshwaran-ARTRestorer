@@ -27,13 +27,13 @@ def restore_with_gemini(image_bytes):
     try:
         # We use the multimodal 'gemini-3-flash' model for reasoning + generation
         response = client.models.generate_content(
-            model="gemini-3-flash",
+            model="gemini-2.0-flash", 
             contents=[
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
                 prompt
             ],
             config=types.GenerateContentConfig(
-                response_modalities=["IMAGE"] # Crucial: tells Gemini to return an image
+                response_modalities=["IMAGE"]
             )
         )
         
