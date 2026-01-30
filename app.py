@@ -19,7 +19,7 @@ def invisible_ai_restore(image_bytes):
     try:
         # STEP 1: Using 1.5-flash for maximum stability
         analysis = client.models.generate_content(
-            model="gemini-1.5-flash", 
+            model="gemini-2.0-flash", 
             contents=[
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
                 "Describe this vintage photo in 4K detail. Focus on skin texture, "
