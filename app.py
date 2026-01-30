@@ -7,32 +7,37 @@ from google.genai import types
 import PIL.Image
 import io
 
-# Setup - Use your Gemini API Key
-GEMINI_API_KEY = "AIzaSyBqv9g9IrTMYxL6n7zun52j1vPo67iR6-8"
-client = genai.Client(api_key=GEMINI_API_KEY)
+# --- Page Config ---
+st.set_page_config(page_title="AI Photo Restoration", layout="wide")
+
+# Setup - Use Streamlit Secrets for the API Key
+# Go to Streamlit Cloud Settings -> Secrets and add: GEMINI_API_KEY = "your_key"
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except:
+    st.error("Missing API Key! Please add 'GEMINI_API_KEY' to Streamlit Secrets.")
+    st.stop()
+
+client = genai.Client(api_key=api_key)
 
 def invisible_ai_restore(image_bytes):
-    """
-    Step 1: Gemini analyzes the blur.
-    Step 2: Imagen 4 generates the restored version.
-    """
     try:
-        # First, Gemini 'looks' at the photo to understand what to fix
+        # Step 1: Gemini analyzes the image to create a high-fidelity prompt
         analysis = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=[
                 types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
-                "Describe this photo in extreme detail so an artist could recreate it "
-                "perfectly but in 4K high definition, removing all blur and noise."
+                "Describe this photo in extreme detail. Focus on the person's features, "
+                "clothing, and background. Describe it as a flawless, 4K high-definition "
+                "professional photograph, free of any noise, scratches, or blur."
             ]
         )
         detailed_prompt = analysis.text
 
-        # Second, we send that 'perfect description' to the Image Engine
-        # This model is specifically built to output IMAGE pixels.
+        # Step 2: Imagen 3 generates the high-res version based on that description
         response = client.models.generate_image(
-            model="imagen-3.0-generate-002", # Or 'imagen-4.0-generate-001' if available
-            prompt=f"A professional 4K photo restoration: {detailed_prompt}",
+            model="imagen-3.0-generate-002",
+            prompt=f"A professional photo restoration, ultra-high resolution: {detailed_prompt}",
             config=types.GenerateImageConfig(
                 number_of_images=1,
                 aspect_ratio="1:1",
@@ -40,7 +45,7 @@ def invisible_ai_restore(image_bytes):
             )
         )
         
-        # Get the actual image data
+        # Extract image bytes from the response
         return response.generated_images[0].image.image_bytes
 
     except Exception as e:
@@ -49,19 +54,34 @@ def invisible_ai_restore(image_bytes):
 
 # --- Streamlit Interface ---
 st.title("✨ Hidden Engine Restorer")
+st.markdown("This tool uses **Gemini 2.0** to analyze damage and **Imagen 3** to rebuild the pixels.")
 
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png"])
+uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     col1, col2 = st.columns(2)
+    img_data = uploaded_file.getvalue()
+    
     with col1:
-        st.image(uploaded_file, caption="Original")
+        st.subheader("Original")
+        st.image(img_data, use_container_width=True)
         if st.button("Restore Now"):
-            with st.spinner("AI Brains are working..."):
-                result = invisible_ai_restore(uploaded_file.getvalue())
-                if result:
-                    st.session_state['result'] = result
+            with st.spinner("Analyzing and Rebuilding..."):
+                result_bytes = invisible_ai_restore(img_data)
+                if result_bytes:
+                    st.session_state['result'] = result_bytes
 
     with col2:
+        st.subheader("Restored")
         if 'result' in st.session_state:
-            st.image(st.session_state['result'], caption="Restored")
+            st.image(st.session_state['result'], use_container_width=True)
+            
+            # Add a Download Button
+            st.download_button(
+                label="Download Restored Image",
+                data=st.session_state['result'],
+                file_name="restored_image.jpg",
+                mime="image/jpeg"
+            )
+        else:
+            st.info("Click 'Restore Now' to see the AI magic.")
