@@ -71,6 +71,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     If the requested drill is unsafe for their injury, provide a safer alternative.
     
     TONE: Encouraging, professional, and age-appropriate.
+    Give responce small and concise but still understandable
     """
     
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
