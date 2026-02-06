@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. Sidebar: Settings & CHAT (MOVED HERE) ---
+# --- 2. Sidebar: Settings & CHAT ---
 with st.sidebar:
     st.title("🏆 CoachBot Profile")
     
@@ -25,24 +25,29 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # --- NEW LOCATION: ASK THE COACH (Always Visible) ---
+    # --- ALWAYS VISIBLE CHAT BOX ---
     st.header("💬 Ask Coach")
     user_question = st.text_area("Type your doubt here:", height=100)
     
     if st.button("Get Answer", type="primary"):
         if user_question.strip():
-            # We call the function defined below (we need to define it first or move logic)
-            # To avoid errors, we'll set a flag to process this in the main body
             st.session_state['custom_question'] = user_question
         else:
             st.warning("Type a question first!")
 
     st.markdown("---")
     
-    # --- Model Settings (Collapsible to save space) ---
+    # --- Model Settings ---
     with st.expander("⚙️ Model Settings"):
         st.info(f"Model: {MODEL_NAME}")
-        max_tokens = st.slider("Max Tokens", 500, 5000, 2000)
+        
+        # --- UPDATED TOKEN LIMIT ---
+        max_tokens = st.slider("Max Tokens", 
+                               min_value=1000, 
+                               max_value=8192, 
+                               value=5000, # <--- Default set to 5000 as requested
+                               help="Controls the length of the response.")
+                               
         temperature = st.slider("Creativity", 0.0, 1.0, 0.4)
         top_p = st.slider("Top-P", 0.0, 1.0, 0.9)
 
@@ -73,7 +78,7 @@ def get_coaching_advice(feature_name, specific_instruction):
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens
+                    max_output_tokens=max_tokens # Uses the 5000 limit
                 ),
                 contents=[full_prompt]
             )
@@ -85,12 +90,10 @@ def get_coaching_advice(feature_name, specific_instruction):
 st.title("👟 CoachBot AI Dashboard")
 
 # --- CHECK FOR SIDEBAR QUESTION ---
-# This displays the answer at the very top if the user asked something in the sidebar
 if 'custom_question' in st.session_state and st.session_state['custom_question']:
     st.info(f"**You Asked:** {st.session_state['custom_question']}")
     answer = get_coaching_advice("Custom Question", st.session_state['custom_question'])
     st.success(answer)
-    # Clear the state so it doesn't persist forever
     del st.session_state['custom_question']
     st.markdown("---")
 
@@ -106,7 +109,7 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Generate Daily Plan"):
-            st.write(get_coaching_advice("Daily Workout", f"Design a 60-min session for {position}."))
+            st.write(get_coaching_advice("Daily Workout", f"Design a detailed 60-min session for {position}."))
     with col2:
         if st.button("Get Speed Drills"):
             st.write(get_coaching_advice("Speed Drills", f"3 agility drills for {sport}."))
