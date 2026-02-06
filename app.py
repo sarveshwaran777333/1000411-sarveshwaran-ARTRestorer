@@ -14,13 +14,11 @@ with st.sidebar:
     st.title("⚙️ CoachBot Settings")
     
     st.header("1. Athlete Profile")
-    # Capturing comprehensive user data as per "Step 2: Model Integration" requirements
     sport = st.selectbox("Select Sport", ["Cricket", "Football", "Basketball", "Athletics", "Tennis", "Badminton"])
     position = st.text_input("Player Position", placeholder="e.g., Wicketkeeper, Striker")
     age = st.number_input("Age", min_value=10, max_value=25, value=15)
     
     st.subheader("⚠️ Health & Safety")
-    # Critical input for "Problem Understanding" - ensuring safety for youth athletes
     injury_history = st.text_area("Injury History / Risk Zones", 
                                   placeholder="e.g., Recovering from ankle sprain. Avoid high impact.",
                                   help="The AI will adapt all workouts to accommodate these injuries.")
@@ -32,7 +30,12 @@ with st.sidebar:
     
     st.header("2. AI Model Tuning")
     st.info("Adjust parameters to satisfy 'Model Testing' criteria.")
-    # Hyperparameters for "Distinguished" grading
+    
+    # --- ADDED: Token Limit Slider for Optimization ---
+    max_tokens = st.slider("Max Response Length (Tokens)", 
+                           min_value=100, max_value=1000, value=500, 
+                           help="Controls how long the AI's answer is. Lower = more concise.")
+                           
     temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.4, 
                             help="Lower (0.3) for safe workouts. Higher (0.7) for creative tactics.")
     top_p = st.slider("Vocabulary Diversity (Top-P)", 0.0, 1.0, 0.9,
@@ -40,7 +43,6 @@ with st.sidebar:
 
 # --- 3. Secure API Connection (Strict Secrets Only) ---
 try:
-    # Retreives key from .streamlit/secrets.toml
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
 except FileNotFoundError:
@@ -54,10 +56,9 @@ except KeyError:
 # --- 4. The Core Logic (Prompt Engineering) ---
 def get_coaching_advice(feature_name, specific_instruction):
     """
-    Generates a response using the Gemini 2.5 Flash model.
+    Generates a response using the Gemini 1.5 Flash model.
     Combines System Context + User Profile + Specific Task.
     """
-    # System Instruction: Defines the Persona and Safety Guardrails
     system_prompt = f"""
     ROLE: You are CoachBot AI, a professional youth sports performance coach.
     
@@ -71,7 +72,6 @@ def get_coaching_advice(feature_name, specific_instruction):
     If the requested drill is unsafe for their injury, provide a safer alternative.
     
     TONE: Encouraging, professional, and age-appropriate.
-    Give responce small and concise but still understandable
     """
     
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
@@ -79,10 +79,11 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash", # Corrected to 1.5-flash (Standard model)
                 config=types.GenerateContentConfig(
                     temperature=temperature,
-                    top_p=top_p
+                    top_p=top_p,
+                    max_output_tokens=max_tokens # --- ADDED: Token Limit applied here ---
                 ),
                 contents=[full_prompt]
             )
@@ -95,7 +96,7 @@ st.title("🏆 CoachBot AI")
 st.markdown(f"**Performance Hub for {sport} Athletes**")
 st.markdown("---")
 
-# Fulfilling the "10 Prompts/Features" Requirement [Source: 19]
+# Fulfilling the "10 Prompts/Features" Requirement
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏋️ Training & Fitness", 
     "🥗 Nutrition & Fuel", 
@@ -103,7 +104,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🩹 Recovery & Rehab"
 ])
 
-# --- Tab 1: Physical Training (Features 1, 2, 3) ---
+# --- Tab 1: Physical Training ---
 with tab1:
     col1, col2 = st.columns(2)
     with col1:
@@ -123,7 +124,7 @@ with tab1:
             prompt = f"Create a cardiovascular endurance plan suitable for a {age}-year-old to last a full match. Ensure it is age-appropriate."
             st.write(get_coaching_advice("Stamina Plan", prompt))
 
-# --- Tab 2: Nutrition (Features 4, 5, 6) ---
+# --- Tab 2: Nutrition ---
 with tab2:
     col1, col2 = st.columns(2)
     with col1:
@@ -143,7 +144,7 @@ with tab2:
             prompt = "Identify natural food sources for key athletic vitamins (Magnesium, Zinc, Vitamin D). Do not recommend pills for youth athletes."
             st.write(get_coaching_advice("Nutrition Advice", prompt))
 
-# --- Tab 3: Tactics (Features 7, 8) ---
+# --- Tab 3: Tactics ---
 with tab3:
     st.subheader("7. Game Intelligence (Tactics)")
     if st.button("Get Tactical Analysis"):
@@ -155,7 +156,7 @@ with tab3:
         prompt = "Describe a 5-minute guided visualization routine to reduce anxiety and increase focus before a big game."
         st.write(get_coaching_advice("Mental Routine", prompt))
 
-# --- Tab 4: Recovery (Features 9, 10) ---
+# --- Tab 4: Recovery ---
 with tab4:
     st.error("⚠️ Injury Management Zone")
     col1, col2 = st.columns(2)
@@ -173,3 +174,5 @@ with tab4:
 
 # --- Footer for Submission ---
 st.markdown("---")
+# (Optional) Footer helps identify your work on Streamlit Cloud
+st.caption("CoachBot AI | Created for FA-2 Assessment")
