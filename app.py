@@ -2,6 +2,10 @@ import streamlit as st
 from google import genai
 from google.genai import types
 
+# --- CONFIGURATION: MODEL NAME ---
+# Updated to use the version you requested
+MODEL_NAME = "gemini-2.5-flash" 
+
 # --- 1. Page Configuration & Student Details ---
 st.set_page_config(
     page_title="CoachBot AI | Smart Fitness Assistant",
@@ -29,9 +33,9 @@ with st.sidebar:
     st.divider()
     
     st.header("2. AI Model Tuning")
-    st.info("Adjust parameters to satisfy 'Model Testing' criteria.")
+    st.info(f"Using Model: {MODEL_NAME}")
     
-    # --- OPTIMIZATION FIX: Increased default tokens and minimum limit ---
+    # Token Limit Slider
     max_tokens = st.slider("Max Response Length (Tokens)", 
                            min_value=200, max_value=2000, value=700, 
                            help="Increase this if the answer gets cut off.")
@@ -41,7 +45,7 @@ with st.sidebar:
     top_p = st.slider("Vocabulary Diversity (Top-P)", 0.0, 1.0, 0.9,
                       help="Controls the diversity of the response word choices.")
 
-# --- 3. Secure API Connection (Strict Secrets Only) ---
+# --- 3. Secure API Connection ---
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
@@ -56,10 +60,8 @@ except KeyError:
 # --- 4. The Core Logic (Prompt Engineering) ---
 def get_coaching_advice(feature_name, specific_instruction):
     """
-    Generates a response using the Gemini 1.5 Flash model.
-    Combines System Context + User Profile + Specific Task.
+    Generates a response using the selected Gemini model.
     """
-    # --- PROMPT FIX: Added strict instruction to avoid intros ---
     system_prompt = f"""
     ROLE: You are CoachBot AI, a professional youth sports performance coach.
     
@@ -72,10 +74,9 @@ def get_coaching_advice(feature_name, specific_instruction):
     You must strictly modify all physical advice to accommodate the athlete's injury history.
     
     OUTPUT RULES:
-    1. DO NOT introduce yourself (e.g., no "Hey there!", no "I am CoachBot").
-    2. Start the response DIRECTLY with the plan or answer.
-    3. Use clear headings and bullet points.
-    4. Keep it concise but complete.
+    1. DO NOT introduce yourself. Start directly with the answer.
+    2. Use clear headings and bullet points.
+    3. Keep it concise.
     """
     
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
@@ -83,24 +84,25 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model=MODEL_NAME,  # Uses "gemini-2.5-flash"
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens # Uses the slider value
+                    max_output_tokens=max_tokens
                 ),
                 contents=[full_prompt]
             )
             return response.text
     except Exception as e:
-        return f"⚠️ API Error: {str(e)}"
+        # Error handling in case the model name is slightly different
+        return f"⚠️ API Error: {str(e)} \n\n*Check if '{MODEL_NAME}' is spelled correctly in your API console.*"
 
 # --- 5. Main User Interface ---
 st.title("🏆 CoachBot AI")
 st.markdown(f"**Performance Hub for {sport} Athletes**")
 st.markdown("---")
 
-# Fulfilling the "10 Prompts/Features" Requirement + Q&A
+# Tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏋️ Training & Fitness", 
     "🥗 Nutrition & Fuel", 
