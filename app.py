@@ -54,7 +54,7 @@ except KeyError:
 # --- 4. The Core Logic (Prompt Engineering) ---
 def get_coaching_advice(feature_name, specific_instruction):
     """
-    Generates a response using the Gemini 1.5 Flash model.
+    Generates a response using the Gemini 2.5 Flash model.
     Combines System Context + User Profile + Specific Task.
     """
     # System Instruction: Defines the Persona and Safety Guardrails
