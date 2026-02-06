@@ -172,4 +172,3 @@ with tab4:
 
 # --- Footer for Submission ---
 st.markdown("---")
-st.caption(f"Project by {STUDENT_NAME} ({REG_NO}) | {SCHOOL} | GenAI Assessment FA-2")
