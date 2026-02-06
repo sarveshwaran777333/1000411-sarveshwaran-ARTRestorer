@@ -78,7 +78,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.5-flash",
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p
