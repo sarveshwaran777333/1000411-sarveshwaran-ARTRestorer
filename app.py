@@ -3,23 +3,23 @@ from google import genai
 from google.genai import types
 
 # --- CONFIGURATION: MODEL NAME ---
-# Updated to use the version you requested
-MODEL_NAME = "gemini-2.5-flash" 
+# Ensure this matches your available API model (gemini-1.5-flash is standard)
+MODEL_NAME = "gemini-1.5-flash" 
 
-# --- 1. Page Configuration & Student Details ---
+# --- 1. Page Configuration ---
 st.set_page_config(
     page_title="CoachBot AI | Smart Fitness Assistant",
     page_icon="👟",
     layout="wide"
 )
 
-# --- 2. Sidebar: Athlete Profile & Model Tuning ---
+# --- 2. Sidebar: Settings ---
 with st.sidebar:
     st.title("⚙️ CoachBot Settings")
     
     st.header("1. Athlete Profile")
     sport = st.selectbox("Select Sport", ["Cricket", "Football", "Basketball", "Athletics", "Tennis", "Badminton"])
-    position = st.text_input("Player Position", placeholder="e.g., Wicketkeeper, Striker")
+    position = st.text_input("Player Position", placeholder="e.g., Wicketkeeper, Striker (Leave empty if unsure)")
     age = st.number_input("Age", min_value=10, max_value=25, value=15)
     
     st.subheader("⚠️ Health & Safety")
@@ -33,17 +33,14 @@ with st.sidebar:
     st.divider()
     
     st.header("2. AI Model Tuning")
-    st.info(f"Using Model: {MODEL_NAME}")
     
-    # Token Limit Slider
+    # --- FIX 1: INCREASED TOKEN LIMITS ---
     max_tokens = st.slider("Max Response Length (Tokens)", 
-                           min_value=200, max_value=2000, value=700, 
-                           help="Increase this if the answer gets cut off.")
+                           min_value=500, max_value=5000, value=2000, 
+                           help="Higher value (2000+) prevents the answer from being cut off.")
                            
-    temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.4, 
-                            help="Lower (0.3) for safe workouts. Higher (0.7) for creative tactics.")
-    top_p = st.slider("Vocabulary Diversity (Top-P)", 0.0, 1.0, 0.9,
-                      help="Controls the diversity of the response word choices.")
+    temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.4)
+    top_p = st.slider("Vocabulary Diversity (Top-P)", 0.0, 1.0, 0.9)
 
 # --- 3. Secure API Connection ---
 try:
@@ -54,29 +51,28 @@ except FileNotFoundError:
     st.stop()
 except KeyError:
     st.error("🚨 **Configuration Error:** `GEMINI_API_KEY` not found in Streamlit secrets.")
-    st.info("Please add your API key to the `.streamlit/secrets.toml` file or Streamlit Cloud Secrets.")
+    st.info("Please add your API key to the `.streamlit/secrets.toml` file.")
     st.stop()
 
-# --- 4. The Core Logic (Prompt Engineering) ---
+# --- 4. The Core Logic ---
 def get_coaching_advice(feature_name, specific_instruction):
     """
-    Generates a response using the selected Gemini model.
+    Generates a response using the Gemini model.
     """
+    # --- FIX 2: BETTER PROMPT TO PREVENT ASKING QUESTIONS ---
     system_prompt = f"""
     ROLE: You are CoachBot AI, a professional youth sports performance coach.
     
     ATHLETE CONTEXT:
-    - Age: {age} | Sport: {sport} | Position: {position}
+    - Age: {age} | Sport: {sport} | Position: {position if position else "General Player"}
     - Diet: {diet_pref}
     - INJURY STATUS: {injury_history}
     
-    CRITICAL SAFETY PROTOCOL:
-    You must strictly modify all physical advice to accommodate the athlete's injury history.
-    
-    OUTPUT RULES:
-    1. DO NOT introduce yourself. Start directly with the answer.
-    2. Use clear headings and bullet points.
-    3. Keep it concise.
+    CRITICAL INSTRUCTIONS:
+    1. If the "Sport" is broad (like 'Athletics') and 'Position' is empty, ASSUME a standard event (e.g., 100m Sprinter) and generate the plan immediately. DO NOT ask clarifying questions.
+    2. Strictly modify advice to be safe for the "Injury Status".
+    3. DO NOT introduce yourself. Start directly with the answer.
+    4. Keep the response complete and do not cut off.
     """
     
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
@@ -84,18 +80,17 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model=MODEL_NAME,  # Uses "gemini-2.5-flash"
+                model=MODEL_NAME, 
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens
+                    max_output_tokens=max_tokens  # Uses the updated high limit
                 ),
                 contents=[full_prompt]
             )
             return response.text
     except Exception as e:
-        # Error handling in case the model name is slightly different
-        return f"⚠️ API Error: {str(e)} \n\n*Check if '{MODEL_NAME}' is spelled correctly in your API console.*"
+        return f"⚠️ API Error: {str(e)}"
 
 # --- 5. Main User Interface ---
 st.title("🏆 CoachBot AI")
@@ -117,12 +112,12 @@ with tab1:
     with col1:
         st.subheader("1. Position-Specific Workout")
         if st.button("Generate Daily Plan"):
-            prompt = f"Design a 60-minute training session specifically for a {position}. Include dynamic warm-up, skill drills, and cool-down."
+            prompt = f"Design a 60-minute training session for a {position if position else sport} athlete. Include dynamic warm-up, skill drills, and cool-down."
             st.write(get_coaching_advice("Daily Workout", prompt))
             
         st.subheader("2. Speed & Agility")
         if st.button("Get Speed Drills"):
-            prompt = f"List 3 specific agility drills to improve acceleration and reaction time for a {position} in {sport}."
+            prompt = f"List 3 specific agility drills to improve acceleration and reaction time for {sport}."
             st.write(get_coaching_advice("Agility Drills", prompt))
             
     with col2:
@@ -155,7 +150,7 @@ with tab2:
 with tab3:
     st.subheader("7. Game Intelligence (Tactics)")
     if st.button("Get Tactical Analysis"):
-        prompt = f"Explain the key tactical responsibilities of a {position} in {sport}. Give 3 advanced tips to read the game better."
+        prompt = f"Explain the key tactical responsibilities of a {position if position else 'player'} in {sport}. Give 3 advanced tips to read the game better."
         st.write(get_coaching_advice("Tactics", prompt))
         
     st.subheader("8. Mental Performance")
