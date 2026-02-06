@@ -31,10 +31,10 @@ with st.sidebar:
     st.header("2. AI Model Tuning")
     st.info("Adjust parameters to satisfy 'Model Testing' criteria.")
     
-    # --- ADDED: Token Limit Slider for Optimization ---
+    # --- OPTIMIZATION FIX: Increased default tokens and minimum limit ---
     max_tokens = st.slider("Max Response Length (Tokens)", 
-                           min_value=100, max_value=1000, value=500, 
-                           help="Controls how long the AI's answer is. Lower = more concise.")
+                           min_value=200, max_value=2000, value=700, 
+                           help="Increase this if the answer gets cut off.")
                            
     temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.4, 
                             help="Lower (0.3) for safe workouts. Higher (0.7) for creative tactics.")
@@ -59,6 +59,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     Generates a response using the Gemini 1.5 Flash model.
     Combines System Context + User Profile + Specific Task.
     """
+    # --- PROMPT FIX: Added strict instruction to avoid intros ---
     system_prompt = f"""
     ROLE: You are CoachBot AI, a professional youth sports performance coach.
     
@@ -68,10 +69,13 @@ def get_coaching_advice(feature_name, specific_instruction):
     - INJURY STATUS: {injury_history}
     
     CRITICAL SAFETY PROTOCOL:
-    You must strictly modify all physical advice to accommodate the athlete's injury history. 
-    If the requested drill is unsafe for their injury, provide a safer alternative.
+    You must strictly modify all physical advice to accommodate the athlete's injury history.
     
-    TONE: Encouraging, professional, and age-appropriate.
+    OUTPUT RULES:
+    1. DO NOT introduce yourself (e.g., no "Hey there!", no "I am CoachBot").
+    2. Start the response DIRECTLY with the plan or answer.
+    3. Use clear headings and bullet points.
+    4. Keep it concise but complete.
     """
     
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
@@ -79,11 +83,11 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model="gemini-2.5-flash", # Corrected to 1.5-flash (Standard model)
+                model="gemini-1.5-flash",
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens # --- ADDED: Token Limit applied here ---
+                    max_output_tokens=max_tokens # Uses the slider value
                 ),
                 contents=[full_prompt]
             )
@@ -96,12 +100,13 @@ st.title("🏆 CoachBot AI")
 st.markdown(f"**Performance Hub for {sport} Athletes**")
 st.markdown("---")
 
-# Fulfilling the "10 Prompts/Features" Requirement
-tab1, tab2, tab3, tab4 = st.tabs([
+# Fulfilling the "10 Prompts/Features" Requirement + Q&A
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏋️ Training & Fitness", 
     "🥗 Nutrition & Fuel", 
     "🧠 Tactics & Mindset", 
-    "🩹 Recovery & Rehab"
+    "🩹 Recovery & Rehab",
+    "💬 Ask Coach"
 ])
 
 # --- Tab 1: Physical Training ---
@@ -172,7 +177,19 @@ with tab4:
             prompt = "Generate a comprehensive recovery routine: Active recovery exercises, foam rolling techniques, and sleep advice."
             st.write(get_coaching_advice("Recovery", prompt))
 
-# --- Footer for Submission ---
+# --- Tab 5: Ask Coach ---
+with tab5:
+    st.header("💬 Ask the Coach Anything")
+    st.markdown("Have a specific doubt? Ask here, and I'll answer based on your athlete profile.")
+    
+    user_question = st.text_area("Your Question:", height=100, placeholder="e.g., How can I improve my weak foot accuracy?")
+    
+    if st.button("Get Answer"):
+        if user_question.strip():
+            st.write(get_coaching_advice("Custom Question", user_question))
+        else:
+            st.warning("⚠️ Please type a question first!")
+
+# --- Footer ---
 st.markdown("---")
-# (Optional) Footer helps identify your work on Streamlit Cloud
 st.caption("CoachBot AI | Created for FA-2 Assessment")
