@@ -3,8 +3,8 @@ from google import genai
 from google.genai import types
 
 # --- CONFIGURATION: MODEL NAME ---
-# Ensure this matches your available API model (gemini-1.5-flash is standard)
-MODEL_NAME = "gemini-1.5-flash" 
+# Updated to use the specific version you requested
+MODEL_NAME = "gemini-2.5-flash" 
 
 # --- 1. Page Configuration ---
 st.set_page_config(
@@ -33,8 +33,9 @@ with st.sidebar:
     st.divider()
     
     st.header("2. AI Model Tuning")
+    st.info(f"Using Model: {MODEL_NAME}")
     
-    # --- FIX 1: INCREASED TOKEN LIMITS ---
+    # Token Limit Slider (High default to prevent cut-offs)
     max_tokens = st.slider("Max Response Length (Tokens)", 
                            min_value=500, max_value=5000, value=2000, 
                            help="Higher value (2000+) prevents the answer from being cut off.")
@@ -59,7 +60,6 @@ def get_coaching_advice(feature_name, specific_instruction):
     """
     Generates a response using the Gemini model.
     """
-    # --- FIX 2: BETTER PROMPT TO PREVENT ASKING QUESTIONS ---
     system_prompt = f"""
     ROLE: You are CoachBot AI, a professional youth sports performance coach.
     
@@ -71,7 +71,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     CRITICAL INSTRUCTIONS:
     1. If the "Sport" is broad (like 'Athletics') and 'Position' is empty, ASSUME a standard event (e.g., 100m Sprinter) and generate the plan immediately. DO NOT ask clarifying questions.
     2. Strictly modify advice to be safe for the "Injury Status".
-    3. DO NOT introduce yourself. Start directly with the answer.
+    3. DO NOT introduce yourself (No "Hello", "I am CoachBot"). Start directly with the first drill or advice.
     4. Keep the response complete and do not cut off.
     """
     
@@ -80,17 +80,18 @@ def get_coaching_advice(feature_name, specific_instruction):
     try:
         with st.spinner(f"Coach is generating {feature_name}..."):
             response = client.models.generate_content(
-                model=MODEL_NAME, 
+                model=MODEL_NAME,  # Uses "gemini-2.5-flash"
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens  # Uses the updated high limit
+                    max_output_tokens=max_tokens  # Uses high token limit
                 ),
                 contents=[full_prompt]
             )
             return response.text
     except Exception as e:
-        return f"⚠️ API Error: {str(e)}"
+        # Fallback error message
+        return f"⚠️ API Error: {str(e)} \n\n*Note: Double check if '{MODEL_NAME}' is the exact name in your API console.*"
 
 # --- 5. Main User Interface ---
 st.title("🏆 CoachBot AI")
