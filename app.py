@@ -2,21 +2,17 @@ import streamlit as st
 from google import genai
 from google.genai import types
 
-# --- CONFIGURATION: MODEL NAME ---
 MODEL_NAME = "gemini-2.5-flash" 
 
-# --- 1. Page Configuration ---
 st.set_page_config(
     page_title="CoachBot AI | Smart Fitness Assistant",
     page_icon="👟",
     layout="wide"
 )
 
-# --- 2. Sidebar: Settings & CHAT ---
 with st.sidebar:
     st.title("🏆 CoachBot Profile")
     
-    # --- Athlete Inputs ---
     sport = st.selectbox("Sport", ["Cricket", "Football", "Basketball", "Athletics", "Tennis", "Badminton"])
     position = st.text_input("Position", placeholder="e.g., Striker")
     age = st.number_input("Age", 10, 25, 15)
@@ -25,7 +21,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # --- ALWAYS VISIBLE CHAT BOX ---
     st.header("💬 Ask Coach")
     user_question = st.text_area("Type your doubt here:", height=100)
     
@@ -37,21 +32,18 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # --- Model Settings ---
     with st.expander("⚙️ Model Settings"):
         st.info(f"Model: {MODEL_NAME}")
         
-        # --- UPDATED TOKEN LIMIT ---
         max_tokens = st.slider("Max Tokens", 
                                min_value=1000, 
                                max_value=8192, 
-                               value=5000, # <--- Default set to 5000 as requested
+                               value=5000,
                                help="Controls the length of the response.")
                                
         temperature = st.slider("Creativity", 0.0, 1.0, 0.4)
         top_p = st.slider("Top-P", 0.0, 1.0, 0.9)
 
-# --- 3. Secure API Connection ---
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
@@ -59,7 +51,6 @@ except Exception as e:
     st.error(f"🚨 API Key Error: {e}")
     st.stop()
 
-# --- 4. The Core Logic ---
 def get_coaching_advice(feature_name, specific_instruction):
     system_prompt = f"""
     ROLE: You are CoachBot AI, a youth sports coach.
@@ -81,7 +72,7 @@ def get_coaching_advice(feature_name, specific_instruction):
                 config=types.GenerateContentConfig(
                     temperature=temperature,
                     top_p=top_p,
-                    max_output_tokens=max_tokens # Uses the 5000 limit
+                    max_output_tokens=max_tokens
                 ),
                 contents=[full_prompt]
             )
@@ -89,10 +80,8 @@ def get_coaching_advice(feature_name, specific_instruction):
     except Exception as e:
         return f"⚠️ API Error: {str(e)}"
 
-# --- 5. Main Content Area ---
 st.title("👟 CoachBot AI Dashboard")
 
-# --- CHECK FOR SIDEBAR QUESTION ---
 if 'custom_question' in st.session_state and st.session_state['custom_question']:
     st.info(f"**You Asked:** {st.session_state['custom_question']}")
     answer = get_coaching_advice("Custom Question", st.session_state['custom_question'])
@@ -100,7 +89,6 @@ if 'custom_question' in st.session_state and st.session_state['custom_question']
     del st.session_state['custom_question']
     st.markdown("---")
 
-# Standard Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏋️ Training", 
     "🥗 Nutrition", 
