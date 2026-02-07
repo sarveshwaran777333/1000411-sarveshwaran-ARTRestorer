@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 with st.sidebar:
-    st.title("🏆 CoachBot Profile")
+    st.title("CoachBot Profile")
     
     sport = st.selectbox("Sport", ["Cricket", "Football", "Basketball", "Athletics", "Tennis", "Badminton"])
     position = st.text_input("Position", placeholder="e.g., Striker")
@@ -21,7 +21,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    st.header("💬 Ask Coach")
+    st.header("Ask Coach")
     user_question = st.text_area("Type your doubt here:", height=100)
     
     if st.button("Get Answer", type="primary"):
@@ -32,7 +32,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    with st.expander("⚙️ Model Settings"):
+    with st.expander("Model Settings"):
         st.info(f"Model: {MODEL_NAME}")
         
         max_tokens = st.slider("Max Tokens", 
@@ -48,7 +48,7 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
 except Exception as e:
-    st.error(f"🚨 API Key Error: {e}")
+    st.error(f"API Key Error: {e}")
     st.stop()
 
 def get_coaching_advice(feature_name, specific_instruction):
