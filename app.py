@@ -69,7 +69,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     2. Strict safety for injuries.
     3. Keep it concise and formatted.
     4. ALWAYS provide specific exercises/drills when asked. Do NOT refuse to answer.
-    5. Also provide diet plans without any questions
+    5. Also provide diet plans if asked without any questions
     6. BE CONCISE: Keep answers under 400 words unless asked for a full plan.
     """
     full_prompt = f"{system_prompt}\n\nTASK: {specific_instruction}"
