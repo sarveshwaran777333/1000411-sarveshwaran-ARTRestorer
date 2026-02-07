@@ -33,11 +33,9 @@ with st.sidebar:
     st.markdown("---")
     
     with st.expander("Model Settings"):
-        st.info(f"Model: {MODEL_NAME}")
-        
         max_tokens = st.slider("Max Tokens", 
-                               min_value=1000, 
-                               max_value=8192, 
+                               min_value=100, 
+                               max_value=9000, 
                                value=5000,
                                help="Controls the length of the response.")
                                
