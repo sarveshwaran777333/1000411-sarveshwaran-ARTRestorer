@@ -90,10 +90,10 @@ if 'custom_question' in st.session_state and st.session_state['custom_question']
     st.markdown("---")
 
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🏋️ Training", 
-    "🥗 Nutrition", 
-    "🧠 Tactics", 
-    "🩹 Recovery"
+    "Training", 
+    "Nutrition", 
+    "Tactics", 
+    "Recovery"
 ])
 
 with tab1:
