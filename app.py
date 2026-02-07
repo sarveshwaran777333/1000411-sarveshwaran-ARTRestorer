@@ -80,7 +80,7 @@ def get_coaching_advice(feature_name, specific_instruction):
     except Exception as e:
         return f"⚠️ API Error: {str(e)}"
 
-st.title("👟 CoachBot AI Dashboard")
+st.title("CoachBot AI Dashboard")
 
 if 'custom_question' in st.session_state and st.session_state['custom_question']:
     st.info(f"**You Asked:** {st.session_state['custom_question']}")
