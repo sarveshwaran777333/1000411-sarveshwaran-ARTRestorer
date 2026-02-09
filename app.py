@@ -32,7 +32,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    with st.expander("Model Settings"):
+    with st.expander("bot Settings"):
         max_tokens = st.slider("Max Tokens", 
                                min_value=100, 
                                max_value=9000, 
@@ -119,3 +119,5 @@ with tab3:
 with tab4:
     if st.button("Get Modified Workout (Injury Safe)"):
         st.write(get_coaching_advice("Rehab", f"Training plan safe for injury: {injury_history}."))
+
+st.markdown("---")
