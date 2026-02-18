@@ -1,5 +1,6 @@
 streamlit
-google-genai
-magic_hour
-Pillow
+google-generativeai
+pandas
+plotly
 numpy
+Pillow
