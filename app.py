@@ -11,7 +11,7 @@ from datetime import datetime
 # 1. PAGE CONFIGURATION & STYLING
 # ==========================================
 st.set_page_config(
-    page_title="CoachBot AI Pro",
+    page_title="CoachBot AI",
     page_icon="🏆",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -152,7 +152,7 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=[system_prompt]
         )
         return response.text
