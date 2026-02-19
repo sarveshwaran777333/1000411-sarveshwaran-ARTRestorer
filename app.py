@@ -122,7 +122,7 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     system_prompt = f"""
     You are Coach Ace 🦾, an elite youth sports coach.
     
-    ATHLETE PROFILE:
+    COACH PROFILE:
     {profile_ctx}
     
     YOUR TASK:
