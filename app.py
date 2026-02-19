@@ -146,7 +146,7 @@ def generate_advice(prompt_key, user_details, profile_ctx):
         return f"⚠️ API Error: {str(e)}"
 
 with st.sidebar:
-    st.header("🏃 Athlete Profile")
+    st.header("🏃 COACH Profile")
     sport = st.selectbox("Sport", ["Football", "Cricket", "Basketball", "Tennis", "Athletics", "Rugby"])
     position = st.text_input("Position", value="Striker")
     age = st.slider("Age", 10, 30, 16)
