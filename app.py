@@ -153,7 +153,7 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     # 3. Call API with Error Handling
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             config=types.GenerateContentConfig(temperature=0.7),
             contents=[system_prompt]
         )
