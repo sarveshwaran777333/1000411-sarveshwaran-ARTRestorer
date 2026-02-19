@@ -295,4 +295,3 @@ with tab3:
 
 # Footer
 st.markdown("---")
-st.caption("CoachBot AI Pro | NextGen Sports Lab | Summative Assessment Project")
