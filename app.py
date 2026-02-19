@@ -7,9 +7,6 @@ import time
 import random
 from datetime import datetime
 
-# ==========================================
-# 1. PAGE CONFIGURATION & VISIBILITY STYLING
-# ==========================================
 st.set_page_config(
     page_title="CoachBot AI Pro",
     page_icon="🏆",
@@ -17,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS: Includes the "Black Text" fix and Mascot Animations
 st.markdown("""
 <style>
     /* Main Gradient Header */
@@ -75,17 +71,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. SESSION STATE (Gamification)
-# ==========================================
 if 'generated_count' not in st.session_state:
     st.session_state.generated_count = 0
 if 'badges' not in st.session_state:
     st.session_state.badges = []
 
-# ==========================================
-# 3. API SETUP (Using google-genai)
-# ==========================================
 try:
     if "GEMINI_API_KEY" in st.secrets:
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -96,9 +86,6 @@ except Exception as e:
     st.error(f"Setup Error: {e}")
     st.stop()
 
-# ==========================================
-# 4. CORE LOGIC & PROMPTS
-# ==========================================
 def check_achievements():
     """Unlocks badges based on usage."""
     count = st.session_state.generated_count
@@ -117,7 +104,6 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     """
     Generates advice using the 10 required prompts.
     """
-    # 1. The Prompt Database (Assignment Requirement: 10 Prompts)
     prompts_db = {
         "weekly_plan": "Create a detailed 7-day training schedule for a {position} in {sport}. Use bold headers for each day (e.g., **Day 1**).",
         "drills": "List 3 specific technical drills to improve {goal} for a {position}. Explain the setup for each.",
@@ -131,7 +117,6 @@ def generate_advice(prompt_key, user_details, profile_ctx):
         "speed": "Provide a speed and agility circuit training plan."
     }
     
-    # 2. Construct the Full Prompt
     base_instruction = prompts_db.get(prompt_key, "Provide expert coaching advice.")
     
     system_prompt = f"""
@@ -150,7 +135,6 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     3. If injury is present ({profile_ctx.split('Injury:')[1]}), strictly modify advice for safety.
     """
     
-    # 3. Call API with Error Handling
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -161,9 +145,6 @@ def generate_advice(prompt_key, user_details, profile_ctx):
     except Exception as e:
         return f"⚠️ API Error: {str(e)}"
 
-# ==========================================
-# 5. SIDEBAR: PROFILE & BADGES
-# ==========================================
 with st.sidebar:
     st.header("🏃 Athlete Profile")
     sport = st.selectbox("Sport", ["Football", "Cricket", "Basketball", "Tennis", "Athletics", "Rugby"])
@@ -179,11 +160,7 @@ with st.sidebar:
     else:
         st.caption("Generate plans to unlock badges!")
 
-# ==========================================
-# 6. MAIN LAYOUT
-# ==========================================
 
-# Header
 st.markdown("""
 <div class="main-header">
     <div class="mascot-icon">🦾</div>
@@ -192,17 +169,14 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Tabs
 tab1, tab2, tab3 = st.tabs(["🏋️ Training Hub", "📊 Analytics (Pro)", "🥗 Nutrition & Wellness"])
 
-# --- TAB 1: TRAINING HUB (The Main Feature) ---
 with tab1:
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.subheader("🤖 Ask Coach Ace")
         
-        # Map readable names to prompt keys
         task_map = {
             "📅 Weekly Schedule": "weekly_plan",
             "🏃 Speed & Agility": "speed",
@@ -217,14 +191,11 @@ with tab1:
         
         if st.button("🚀 Generate Plan", type="primary"):
             with st.spinner("Coach Ace is planning your session..."):
-                # 1. Build Context
                 profile_context = f"Sport: {sport}, Pos: {position}, Age: {age}, Diet: {diet}, Injury: {injury}"
                 prompt_key = task_map[selected_task]
                 
-                # 2. Get Advice
                 result = generate_advice(prompt_key, user_focus, profile_context)
                 
-                # 3. DISPLAY WITH BLACK TEXT FIX
                 st.markdown("### 📋 Your Personalized Plan")
                 st.markdown(f"""
                 <div class="black-text-container">
@@ -232,7 +203,6 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # 4. Gamification
                 st.balloons()
                 st.session_state.generated_count += 1
                 check_achievements()
@@ -242,7 +212,6 @@ with tab1:
         st.info(f"Plans Generated: {st.session_state.generated_count}")
         st.markdown("**Tip:** Mention any injuries in the sidebar to get a safe recovery plan!")
 
-# --- TAB 2: ANALYTICS (Interactive Plotly) ---
 with tab2:
     st.subheader("📊 Performance Radar")
     st.caption("Interactive assessment based on your position.")
@@ -250,7 +219,6 @@ with tab2:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        # Dynamic Data Visualization
         categories = ['Pace', 'Shooting', 'Passing', 'Dribbling', 'Physical']
         values = [random.randint(60, 95) for _ in range(5)]
         
@@ -273,7 +241,6 @@ with tab2:
         })
         st.line_chart(chart_data, x="Day", y="Energy")
 
-# --- TAB 3: NUTRITION & WELLNESS ---
 with tab3:
     col1, col2 = st.columns(2)
     
@@ -293,5 +260,4 @@ with tab3:
                 res = generate_advice("mental", "Reduce anxiety", ctx)
                 st.markdown(f'<div class="black-text-container">{res}</div>', unsafe_allow_html=True)
 
-# Footer
 st.markdown("---")
