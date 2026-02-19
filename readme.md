@@ -7,54 +7,96 @@ Registration Number: 1000411
 Course: Artificial Intelligence
 Assignment: Summative Assessment (Generative AI)
 
-# Project Overview
-CoachBot AI is a generative AI-powered web application designed to bridge the gap in professional coaching for youth athletes, specifically those in under-resourced
-regions. Developed for NextGen Sports Lab, this tool acts as a virtual coach, providing personalized training routines, nutritional guidance, tactical analysis, and
-injury management strategies.
+# CoachBot AI Pro 🏆
+Empowering the Next Generation of Athletes with Generative AI
+CoachBot AI Pro is a cutting-edge, generative AI-powered web assistant designed to bridge the gap in professional sports coaching for youth athletes. Built using Python, Streamlit, and the Gemini 1.5 API, this application provides personalized training, injury-safe recovery plans, tactical advice, and nutritional guidance tailored to an athlete's specific sport, position, and physical condition.
 
-The application leverages Google's Gemini Model to analyze user profiles (age, sport, position, injuries) and generate safety-conscious, high-quality advice.
+# Live Demo
+[https://1000411-sarveshwaran-athleticbot-eqpbdv3faanlnnioh2lsgp.streamlit.app/]
 
-# Project Links
+# Research Findings & Project Influence
+The development of CoachBot AI was guided by several key areas of research:
 
-Live App: [https://1000411-sarveshwaran-athleticbot-eqpbdv3faanlnnioh2lsgp.streamlit.app/]
+Sport-Specific Biomechanics: Research into how different positions (e.g., Goalkeepers vs. Strikers) require distinct physical conditioning and reactive drills.
 
-# Research Findings
+Youth Injury Prevention: Studies on common youth sports injuries (like ACL strains or Osgood-Schlatter disease) influenced the "Safety First" logic in the AI's recovery modules.
 
-To ensure CoachBot AI provides accurate and safe advice, the following research areas were explored during the design phase:
+Nutritional Science for Adolescents: Guidelines from organizations like EatRight.org were used to frame prompts ensuring the AI suggests balanced macros suitable for growing athletes.
 
-1. Youth Sports Safety & Injury Prevention:
+Generative AI in SportsTech: Analysis of how LLMs can simulate a "coaching persona" to provide encouraging and technically accurate feedback.
 
-Research indicated that youth athletes are highly susceptible to overuse injuries. Consequently, the AI system prompt was designed with a strict "Safety First" rule, ensuring that any reported injury (e.g., "Weak ankles") automatically modifies the suggested workout to be low-impact.
+# Technical Stack & Model Configuration
+Core Technologies
+Frontend: Streamlit (Custom CSS for "Dark Mode" visibility and responsive UI)
 
-Reference: Stop Sports Injuries - Youth Sports [https://ncys.org/safety/stop-sports-injuries/]
+AI Engine: Google Gemini 2.5 Flash (via google-genai SDK)
 
-2. Position-Specific Training:
+Data Visualization: Plotly (Radar Charts) and Pandas (Recovery Tracking)
 
-A "one-size-fits-all" approach fails in team sports. Research highlighted that a Goalkeeper requires explosive plyometrics, while a Midfielder requires high aerobic capacity. The application inputs Position and Sport to tailor these outputs.
+Deployment: Streamlit Cloud & GitHub
 
-Reference: ExRx.net - Exercise Prescription [https://exrx.net/Lists/WorkoutMenu]
+Model Parameters
+To ensure the perfect balance between professional accuracy and creative engagement, the following hyperparameters were used:
 
-3. Nutritional Requirements for Young Athletes:
+Temperature: 0.7 (Balances technical coaching precision with creative, engaging delivery).
 
-Adolescent athletes have higher caloric and protein needs for growth and recovery. The app supports dietary preferences (Vegan, Non-Veg) to ensure inclusivity.
+Top_P & Top_K: Defaulted for high-quality token diversity.
 
-Reference: Academy of Nutrition and Dietetics [https://www.eatright.org/]
+Safety Settings: Configured to prioritize physical safety when "Injury" data is detected in the user profile.
 
-# Model Integration & Configuration
+# Prompt Engineering
+The application utilizes a library of 10 primary prompt templates designed to act as "Coach Ace." Examples include:
 
-1. Model Used
-Model: gemini-2.5-flash (Optimized for speed and high-throughput text generation).
+Weekly Plan: Create a detailed 7-day training schedule for a {position} in {sport}.
 
-Library: google-genai and streamlit.
+Technical Drills: List 3 specific technical drills to improve {goal} for a {position}.
 
-2. Hyperparameter Tuning
-The application allows for dynamic (user-controlled) and static tuning to balance creativity with safety.
- ______________________________________________________________________________________________________________________________________________________________
-|  Parameter   |      Value    |       Justification                                                                                                           |
- ______________|_______________|_______________________________________________________________________________________________________________________________
-|  Temperature | 0.4 (Default) |  A lower temperature was chosen to ensure the advice is grounded and realistic, rather than hallucinating dangerous exercises.|
- ______________|_______________|_______________________________________________________________________________________________________________________________
-|  Top-P       |      0.9      |  Ensures a diverse range of vocabulary while keeping the context focused on sports science.                                   |
- ______________|_______________|_______________________________________________________________________________________________________________________________
-|  Max Tokens  |      5000     |  Allows for detailed, full-day workout plans without cutting off mid-sentence.                                                |
- ______________|_______________|_______________________________________________________________________________________________________________________________
+Injury Recovery: Design a safe, low-impact recovery session for an athlete with {injury}.
+
+Mental Edge: Give a 5-minute visualization routine to reduce anxiety before a match.
+
+Nutrition: Create a 1-day meal plan for a {diet} athlete focused on {goal}.
+(Plus 5 additional features including Warm-ups, Tactics, Hydration, Strength, and Speed circuits.)
+
+📸 Project Demonstration
+1. Athlete Dashboard
+Users can input their sport, position, age, and any current injuries in the sidebar.
+
+[Insert Screenshot of Sidebar/Profile here]
+
+2. Personalized Training Output
+The AI generates structured, easy-to-read plans with clear headers and encouraging coaching tones.
+
+[Insert Screenshot of Generated Training Plan here]
+
+3. Performance Analytics
+Visual radar charts allow users to see their simulated performance metrics.
+
+[Insert Screenshot of Radar Chart here]
+
+⚙️ Installation & Setup
+Clone the repository:
+
+Bash
+git clone https://github.com/[Your-Username]/[Your-Repo-Name].git
+Install dependencies:
+
+Bash
+pip install -r requirements.txt
+Configure API Key:
+Create a .streamlit/secrets.toml file and add your Gemini API key:
+
+Ini, TOML
+GEMINI_API_KEY = "your_api_key_here"
+Run the app:
+
+Bash
+streamlit run app.py
+✅ Assessment Checklist
+Student Name: [Your Full Name]
+
+Registration Number: [Your Reg Number]
+
+Course: Artificial Intelligence - Generative A.I
+
+Repository Access: Shared with ai.assignments@wacpinternational.org
